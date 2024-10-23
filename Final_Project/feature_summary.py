@@ -30,7 +30,7 @@ def export_feature_summary(data: pd.DataFrame, output_csv: str, unique_threshold
         if unique_count <= unique_threshold:
             unique_values_str = ', '.join([str(val) if pd.notna(val) else 'nan' for val in unique_values])
         else:
-            unique_values_str = f"{unique_count}"
+            unique_values_str = f"More than {unique_threshold} unique values"
 
         summary_rows.append({
             'Feature Name': feature,
