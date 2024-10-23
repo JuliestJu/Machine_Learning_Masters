@@ -5,16 +5,16 @@ def split_dataset_by_missing_and_type(df):
     # Filter and sort data based on the conditions provided
 
     # 1) Numeric features with zero missing values, sorted by Unique Values
-    numeric_no_missing = df[(df['Feature Type'] == 'Numeric') & (df['Missing Value Count'] == 0)].sort_values(by='Unique Values')
+    numeric_no_missing = df[(df['Feature Type'] == 'Numeric') & (df['Missing Value Count'] == 0)].sort_values(by='Unique Value Count')
 
     # 2) Categorical features with zero missing values, sorted by Unique Values
-    categorical_no_missing = df[(df['Feature Type'] == 'Categorical') & (df['Missing Value Count'] == 0)].sort_values(by='Unique Values')
+    categorical_no_missing = df[(df['Feature Type'] == 'Categorical') & (df['Missing Value Count'] == 0)].sort_values(by='Unique Value Count')
 
     # 3) Numeric features with non-zero missing values, sorted by Unique Values
-    numeric_with_missing = df[(df['Feature Type'] == 'Numeric') & (df['Missing Value Count'] > 0)].sort_values(by='Unique Values')
+    numeric_with_missing = df[(df['Feature Type'] == 'Numeric') & (df['Missing Value Count'] > 0)].sort_values(by='Unique Value Count')
 
     # 4) Categorical features with non-zero missing values, sorted by Unique Values
-    categorical_with_missing = df[(df['Feature Type'] == 'Categorical') & (df['Missing Value Count'] > 0)].sort_values(by='Unique Values')
+    categorical_with_missing = df[(df['Feature Type'] == 'Categorical') & (df['Missing Value Count'] > 0)].sort_values(by='Unique Value Count')
 
     # Ensure the 'splits' directory exists before saving files
     splits_dir = 'splits'
