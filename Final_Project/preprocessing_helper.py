@@ -88,4 +88,52 @@ def get_imputation_feature_lists_from_dataset(df, missing_threshold=0.3):
         "high_missing_features": high_missing_features
     }
 
+def remove_outlier_features(df, outlier_percentage_threshold=7, iqr_threshold=3):
+    """
+    Removes features from the dataframe where the percentage of outliers exceeds the given threshold.
+
+    Parameters:
+    df (pd.DataFrame): The input dataframe.
+    outlier_percentage_threshold (float): The percentage threshold for removing features with too many outliers.
+    iqr_threshold (float): The threshold for outlier detection based on the IQR method.
+
+    Returns:
+    pd.DataFrame: A new dataframe with features removed if outliers exceed the specified percentage.
+    """
+
+    # Step 1: Calculate the IQR for each feature
+    Q1 = df.quantile(0.25)
+    Q3 = df.quantile(0.75)
+    IQR = Q3 - Q1
+
+    # Step 2: Identify outliers using the specified IQR threshold
+    outlier_condition_adjusted = (df < (Q1 - iqr_threshold * IQR)) | (df > (Q3 + iqr_threshold * IQR))
+
+    # Step 3: Count the number of outliers per feature
+    outliers_per_feature_adjusted = outlier_condition_adjusted.sum()
+
+    # Step 4: Calculate the percentage of outliers for each feature
+    outliers_percentage_adjusted = (outliers_per_feature_adjusted / len(df)) * 100
+
+    # Step 5: Identify features with outliers and their percentages
+    features_with_outliers_adjusted = outliers_percentage_adjusted[outliers_percentage_adjusted > 0]
+    features_with_outliers_adjusted = pd.DataFrame({
+        'Outlier Count': outliers_per_feature_adjusted[features_with_outliers_adjusted.index],
+        'Outlier Percentage': features_with_outliers_adjusted
+    })
+
+    print("DataFrame before removing features:")
+    print(df.shape)
+
+    # Step 6: Remove features where the percentage of outliers exceeds the specified threshold
+    features_to_remove = features_with_outliers_adjusted[features_with_outliers_adjusted['Outlier Percentage'] > outlier_percentage_threshold].index
+    df_cleaned = df.drop(columns=features_to_remove)
+
+    print("\nFeatures with more than {}% outliers and their outlier percentages:".format(outlier_percentage_threshold))
+    print(features_with_outliers_adjusted[features_with_outliers_adjusted['Outlier Percentage'] > outlier_percentage_threshold])
+
+    print("\nDataFrame after removing features with more than {}% outliers:".format(outlier_percentage_threshold))
+    print(df_cleaned.shape)
+
+    return df_cleaned
 
