@@ -10,3 +10,9 @@ virtual_documents/
 
 # Ignore CSV checkpoint files
 *.csv
+
+# Ignore the .virtual_documents directory
+.virtual_documents/
+
+# Ignore all .cpython-312.pyc files
+*.cpython-312.pyc
