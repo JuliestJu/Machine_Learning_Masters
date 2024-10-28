@@ -1,14 +1,16 @@
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import PowerTransformer, StandardScaler, MinMaxScaler
 
-def categorize_numeric_features_by_skewness(df, skew_threshold=0.5, unique_value_threshold=10):
+def categorize_numeric_features_by_skewness_and_variance(df, skew_threshold=0.5, unique_value_threshold=10, variance_threshold=0.01):
     """
-    Categorizes numeric features based on skewness and unique value counts.
+    Categorizes numeric features based on skewness, unique value counts, and variance.
 
     Parameters:
     df (pd.DataFrame): DataFrame containing numeric features.
     skew_threshold (float): Threshold for skewness to decide if a feature is highly skewed.
     unique_value_threshold (int): Threshold to identify discrete features.
+    variance_threshold (float): Threshold for variance to categorize features.
 
     Returns:
     categories (dict): Dictionary with lists of feature names for each transformation category.
@@ -26,24 +28,23 @@ def categorize_numeric_features_by_skewness(df, skew_threshold=0.5, unique_value
     for col in df.columns:
         unique_vals = df[col].nunique()
         skewness = df[col].skew()
-        missing_count = df[col].isnull().sum()
+        variance = df[col].var()
 
         if unique_vals == 2:
             categories['binary'].append(col)
         elif unique_vals <= unique_value_threshold:
             categories['discrete'].append(col)
-        else:
-            if abs(skewness) >= skew_threshold:
-                if (df[col] > 0).all():
-                    categories['log_transform'].append(col)
-                else:
-                    categories['power_transform'].append(col)
+        elif abs(skewness) >= skew_threshold:
+            if (df[col] > 0).all():
+                categories['log_transform'].append(col)
             else:
-                categories['standard_scaler'].append(col)
-    return categories
+                categories['power_transform'].append(col)
+        elif variance >= variance_threshold:
+            categories['standard_scaler'].append(col)
+        else:
+            categories['minmax_scaler'].append(col)
 
-from sklearn.preprocessing import PowerTransformer, StandardScaler, MinMaxScaler
-from sklearn.impute import SimpleImputer
+    return categories
 
 def transform_numeric_features(df, categories):
     """
@@ -60,12 +61,6 @@ def transform_numeric_features(df, categories):
     df_transformed = df.copy()
     transformers = {}
 
-    # Impute missing values
-    # You can choose appropriate imputation strategies per category if needed
-    imputer = SimpleImputer(strategy='median')
-    df_transformed[df_transformed.columns] = imputer.fit_transform(df_transformed)
-    transformers['imputer'] = imputer
-
     # Power Transformation
     if categories['power_transform']:
         pt = PowerTransformer(method='yeo-johnson')
@@ -75,22 +70,19 @@ def transform_numeric_features(df, categories):
     # Log Transformation
     if categories['log_transform']:
         df_transformed[categories['log_transform']] = np.log1p(df_transformed[categories['log_transform']])
-        # No transformer object for log transform, but you can create a placeholder
         transformers['log_transform'] = 'Applied log1p'
 
-    # Standard Scaling
+    # Standard Scaling for high variance features
     if categories['standard_scaler']:
         scaler = StandardScaler()
         df_transformed[categories['standard_scaler']] = scaler.fit_transform(df_transformed[categories['standard_scaler']])
         transformers['standard_scaler'] = scaler
 
-    # Min-Max Scaling (if you have any)
+    # Min-Max Scaling for low variance features
     if categories['minmax_scaler']:
         minmax_scaler = MinMaxScaler()
         df_transformed[categories['minmax_scaler']] = minmax_scaler.fit_transform(df_transformed[categories['minmax_scaler']])
         transformers['minmax_scaler'] = minmax_scaler
-
-    # No transformation needed for 'no_transform', 'binary', and 'discrete' categories
 
     return df_transformed, transformers
 
@@ -107,10 +99,6 @@ def transform_numeric_features_test(df_test, transformers, categories):
     df_transformed (pd.DataFrame): Transformed test DataFrame.
     """
     df_transformed = df_test.copy()
-
-    # Impute missing values
-    imputer = transformers['imputer']
-    df_transformed[df_transformed.columns] = imputer.transform(df_transformed)
 
     # Power Transformation
     if 'power_transformer' in transformers:

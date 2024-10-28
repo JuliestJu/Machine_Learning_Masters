@@ -14,4 +14,4 @@ def plot_histograms_with_variance(df, columns, bins=30):
         plt.tight_layout()
 
 # Example usage:
-# plot_histograms_with_variance(df, selected_columns)
+# plot_histograms_with_variance(df, df.columns.tolist())
